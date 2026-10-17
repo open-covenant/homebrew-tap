@@ -1,0 +1,69 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    name: install on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, ubuntu-24.04]
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: put Homebrew on the path
+        if: runner.os == 'Linux'
+        run: echo "/home/linuxbrew/.linuxbrew/bin" >> "${GITHUB_PATH}"
+
+      - name: tap this checkout
+        run: brew tap open-covenant/tap "${GITHUB_WORKSPACE}"
+
+      - name: style and audit
+        run: |
+          brew style open-covenant/tap
+          brew audit --strict --online --formula open-covenant/tap/covenant-compute
+
+      # brew fetch --os=all skips formulae without bottles, so each platform's
+      # archive is downloaded and checked against the formula here.
+      - name: check every platform's archive
+        shell: bash
+        run: |
+          brew info --json=v2 --variations open-covenant/tap/covenant-compute > "${RUNNER_TEMP}/info.json"
+          jq -r '.formulae[0] | [.urls.stable] + [(.variations // {})[] | .urls.stable // empty] | unique_by(.url)[] | "\(.checksum) \(.url)"' \
+            "${RUNNER_TEMP}/info.json" > "${RUNNER_TEMP}/archives.txt"
+          count="$(grep -c . "${RUNNER_TEMP}/archives.txt" || true)"
+          if [ "${count}" -ne 4 ]; then
+            echo "expected 4 archives in the formula, found ${count}" >&2
+            exit 1
+          fi
+          while read -r sum url; do
+            echo "${url}"
+            curl --proto '=https' --tlsv1.2 -fsSL "${url}" -o "${RUNNER_TEMP}/archive.tar.gz"
+            echo "${sum}  ${RUNNER_TEMP}/archive.tar.gz" | shasum -a 256 -c -
+          done < "${RUNNER_TEMP}/archives.txt"
+
+      - name: install
+        run: brew install open-covenant/tap/covenant-compute
+
+      - name: test
+        run: brew test open-covenant/tap/covenant-compute
