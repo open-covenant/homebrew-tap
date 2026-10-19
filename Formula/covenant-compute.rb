@@ -1,28 +1,28 @@
 class CovenantCompute < Formula
   desc "Rent GPUs by the second, hire coding agents and run nodes on Covenant Compute"
   homepage "https://docs.opencovenant.org/compute"
-  version "0.2.0"
+  version "0.4.1"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
-      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.2.0/covenant-compute-darwin-arm64.tar.gz"
-      sha256 "733756b78a71ef8e3e2bf5e8d24d6915af5c8684261a6e217e8965eeea99fe3f"
+      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.4.1/covenant-compute-darwin-arm64.tar.gz"
+      sha256 "bcea9e9bd493cef0f7568197a6b06ed8d14d36bf2502d98b838338c043a6ee39"
     end
     on_intel do
-      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.2.0/covenant-compute-darwin-x86_64.tar.gz"
-      sha256 "c191e1ef2b910bdcb8ead4349499f5ae97ee045f09c871211bf09e194d7e6e8c"
+      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.4.1/covenant-compute-darwin-x86_64.tar.gz"
+      sha256 "54340753b65f22c04b4b50e16d1a21e30d230d8a6138c847bd085285c7594928"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.2.0/covenant-compute-linux-arm64.tar.gz"
-      sha256 "1bc68c73ae11af20ab82b1babd1eace41c9f7a24d408330223ee531c4e9bcd5b"
+      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.4.1/covenant-compute-linux-arm64.tar.gz"
+      sha256 "5aa9d0673a56094322043a495e39563e8b009b4c643e9f878feaf4ed9a9e0b94"
     end
     on_intel do
-      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.2.0/covenant-compute-linux-x86_64.tar.gz"
-      sha256 "b52d0b583f0ebdf8c3c5b37f1b651123677a6f8eabaca62765f2b656489b6a95"
+      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.4.1/covenant-compute-linux-x86_64.tar.gz"
+      sha256 "a8a91cb60f2251ac070b0bacc104010b121698b65ca9efab6424ef62d79718bb"
     end
   end
 
