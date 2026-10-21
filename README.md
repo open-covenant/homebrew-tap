@@ -14,3 +14,20 @@ Each formula installs a signed build from the
 [Covenant releases](https://github.com/open-covenant/covenant/releases) and
 checks it against the checksum pinned in the formula. The
 [Compute guide](https://docs.opencovenant.org/compute) covers what to do next.
+
+## Local Knowledge
+
+Version 0.5.1 also installs the Knowledge guide, source examples and license notices
+under `$(brew --prefix covenant-compute)/share/covenant-compute`.
+
+```sh
+cp -R "$(brew --prefix covenant-compute)/share/covenant-compute/examples/knowledge" ./knowledge-example
+cd knowledge-example
+covenant-compute knowledge compile .
+covenant-compute knowledge query calculate_total
+```
+
+These commands run locally without a wallet, daemon or model key. The guide is
+`$(brew --prefix covenant-compute)/share/covenant-compute/docs/compute-knowledge.md`.
+`brew test covenant-compute` checks the installed versions, example compilation,
+source citations, snapshot verification and project-bound read-only MCP tools.
