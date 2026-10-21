@@ -1,28 +1,28 @@
 class CovenantCompute < Formula
   desc "Rent GPUs by the second, hire coding agents and run nodes on Covenant Compute"
   homepage "https://docs.opencovenant.org/compute"
-  version "0.5.1"
+  version "0.5.2"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
-      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.5.1/covenant-compute-darwin-arm64.tar.gz"
-      sha256 "8cf3b09bcd4ea950d59a753a98b026e010f6078ed26727fad4062620391b28b1"
+      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.5.2/covenant-compute-darwin-arm64.tar.gz"
+      sha256 "0f28f486057e72f081a2dc3e3914e843eca2d1050691ea83e61614bff6977b9f"
     end
     on_intel do
-      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.5.1/covenant-compute-darwin-x86_64.tar.gz"
-      sha256 "ecd80b4bbb8bfb53093cdb9f0096f3f39bab0ffc7622b366b170ccc8f0d1c74e"
+      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.5.2/covenant-compute-darwin-x86_64.tar.gz"
+      sha256 "ae928d4f0d1f8f92c12f161acfb95d1adbfb0de833f0de77ae221c66ee5e89c2"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.5.1/covenant-compute-linux-arm64.tar.gz"
-      sha256 "f77c04008d6352df3b9c8daef9638715e6ea70fdd8540ac6f95434ba8fef2e96"
+      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.5.2/covenant-compute-linux-arm64.tar.gz"
+      sha256 "b85bb1c835cc8b8a5c29b3b993ac3ea72b6acd767ffb153e72736f76690a7558"
     end
     on_intel do
-      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.5.1/covenant-compute-linux-x86_64.tar.gz"
-      sha256 "4873355a9db5dbc18cb8a3e6a71fcddb8e3d77e779b3485cc3785a6e5b8ec484"
+      url "https://github.com/open-covenant/covenant/releases/download/compute-v0.5.2/covenant-compute-linux-x86_64.tar.gz"
+      sha256 "58c93d93d02a1f1945613f66409547b288041e1da99c875696366391d8fd193b"
     end
   end
 
@@ -45,9 +45,19 @@ class CovenantCompute < Formula
     ENV["COVENANT_COMPUTE_COORDINATOR_URL"] = "http://127.0.0.1:1"
 
     buyer = bin/"covenant-compute"
-    compiled = JSON.parse(shell_output("#{buyer} knowledge compile #{testpath}/source --json"))
+    setup = JSON.parse(shell_output("#{buyer} knowledge setup #{testpath}/source --query calculate_total --json"))
+    assert_equal "ready", setup.fetch("status")
+    assert_equal "verified", setup.fetch("citation_verification").fetch("status")
+    refute setup.fetch("configuration_written")
+    assert_equal "current", setup.fetch("freshness").fetch("state")
+    compiled = setup.fetch("compile")
     project = compiled.fetch("project").fetch("id")
     snapshot = compiled.fetch("snapshot_id")
+    servers = setup.fetch("mcp_config").fetch("mcpServers").values
+    assert_equal 1, servers.length
+    assert_equal buyer.realpath.to_s, servers.first.fetch("command")
+    expected_args = ["knowledge", "mcp", "--project", project, "--store", (testpath/"knowledge").realpath.to_s]
+    assert_equal expected_args, servers.first.fetch("args")
     assert_equal 9, compiled.fetch("coverage").fetch("files")
     search_command = "#{buyer} knowledge query calculate_total --project #{project} --limit 50 --json"
     search = JSON.parse(shell_output(search_command))
@@ -84,6 +94,16 @@ class CovenantCompute < Formula
     result = responses[2].fetch("result")
     refute result.fetch("isError")
     assert_predicate JSON.parse(result.fetch("content").first.fetch("text")).fetch("results"), :any?
+
+    pricing = testpath/"source/python/pricing.py"
+    original = pricing.read
+    File.write(pricing, "#{original}\n# freshness check\n")
+    status_command = "#{buyer} knowledge status --project #{project} --json"
+    stale = JSON.parse(shell_output(status_command))
+    assert_equal "stale", stale.fetch("freshness").fetch("state")
+    assert_equal snapshot, stale.fetch("snapshot_id")
+    File.write(pricing, original)
+    assert_equal "current", JSON.parse(shell_output(status_command)).fetch("freshness").fetch("state")
     refute_path_exists testpath/"unused-buyer"
   end
 end
