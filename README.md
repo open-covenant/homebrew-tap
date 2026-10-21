@@ -17,17 +17,23 @@ checks it against the checksum pinned in the formula. The
 
 ## Local Knowledge
 
-Version 0.5.1 also installs the Knowledge guide, source examples and license notices
+Version 0.5.2 also installs the Knowledge guide, source examples and license notices
 under `$(brew --prefix covenant-compute)/share/covenant-compute`.
 
 ```sh
 cp -R "$(brew --prefix covenant-compute)/share/covenant-compute/examples/knowledge" ./knowledge-example
 cd knowledge-example
-covenant-compute knowledge compile .
+covenant-compute knowledge setup . --query calculate_total --json
 covenant-compute knowledge query calculate_total
 ```
 
+Setup compiles the example, verifies a source citation and prints project-bound
+MCP configuration. Copy that configuration into your MCP client; setup does not
+edit its settings. Status and the viewer report whether saved source is current,
+stale or unavailable. Recompile explicitly after source changes.
+
 These commands run locally without a wallet, daemon or model key. The guide is
 `$(brew --prefix covenant-compute)/share/covenant-compute/docs/compute-knowledge.md`.
-`brew test covenant-compute` checks the installed versions, example compilation,
-source citations, snapshot verification and project-bound read-only MCP tools.
+`brew test covenant-compute` checks the installed versions, guided setup,
+source citations, snapshot verification, source freshness and project-bound
+read-only MCP tools.
